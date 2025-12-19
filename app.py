@@ -30,7 +30,7 @@ Thanks,"""
 st.set_page_config(page_title="Assistant Mail Merge", page_icon="📧")
 st.title("📧 Assistant Mail Merge Tool")
 
-# Sidebar
+# Sidebar Configuration
 st.sidebar.header("Step 1: Configuration")
 gsheet_url = st.sidebar.text_input("Assistant Schedule Link", placeholder="https://...")
 send_from = st.sidebar.text_input("Send From (Email Alias)", value="studiomanagers@berklee.edu")
@@ -53,13 +53,17 @@ if csv_file:
     try:
         df = pd.read_csv(csv_file)
         df.columns = [c.strip() for c in df.columns]
+        
+        # Fill in the grouped Dates and Times
         df['Signup Date'] = df['Signup Date'].ffill()
         df['Signup Time'] = df['Signup Time'].ffill()
 
         output_data = []
         for _, row in df.iterrows():
-            try: dt = pd.to_datetime(row['Signup Date'])
-            except: dt = datetime.now()
+            try:
+                dt = pd.to_datetime(row['Signup Date'])
+            except:
+                dt = datetime.now()
             
             sem = get_semester_code(dt)
             is_complete = str(row['Complete']).upper() == 'TRUE'
@@ -82,7 +86,7 @@ if csv_file:
             body = body.replace("\n", "<br>")
             
             output_data.append({
-                "Status": "Pending", # <--- NEW COLUMN
+                "Status": "Pending",
                 "Send Date": row['Signup Date'],
                 "Send Time": row['Signup Time'],
                 "First Name": row['First Name'],
@@ -96,5 +100,6 @@ if csv_file:
         result_df = pd.DataFrame(output_data)
         st.success(f"Processed {len(result_df)} assistants.")
         st.download_button("Download Processed CSV", result_df.to_csv(index=False), "ready_to_mail_merge.csv")
+
     except Exception as e:
         st.error(f"Error: {e}")
