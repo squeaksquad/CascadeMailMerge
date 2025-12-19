@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import io
 
-# --- BAKED-IN TEMPLATES (With "Thanks," included) ---
+# --- BAKED-IN TEMPLATES ---
 REQ_TEMPLATE = """Hi <field_First Name>,
 
 You may now access the Assistant Schedule.
@@ -30,7 +30,7 @@ Thanks,"""
 st.set_page_config(page_title="Assistant Mail Merge", page_icon="📧")
 st.title("📧 Assistant Mail Merge Tool")
 
-# Sidebar Configuration
+# Sidebar
 st.sidebar.header("Step 1: Configuration")
 gsheet_url = st.sidebar.text_input("Assistant Schedule Link", placeholder="https://...")
 send_from = st.sidebar.text_input("Send From (Email Alias)", value="studiomanagers@berklee.edu")
@@ -53,17 +53,13 @@ if csv_file:
     try:
         df = pd.read_csv(csv_file)
         df.columns = [c.strip() for c in df.columns]
-        
-        # Ensure grouping dates/times are filled down
         df['Signup Date'] = df['Signup Date'].ffill()
         df['Signup Time'] = df['Signup Time'].ffill()
 
         output_data = []
         for _, row in df.iterrows():
-            try:
-                dt = pd.to_datetime(row['Signup Date'])
-            except:
-                dt = datetime.now()
+            try: dt = pd.to_datetime(row['Signup Date'])
+            except: dt = datetime.now()
             
             sem = get_semester_code(dt)
             is_complete = str(row['Complete']).upper() == 'TRUE'
@@ -75,21 +71,18 @@ if csv_file:
                     return str(int(f)) if f.is_integer() else str(f)
                 except: return str(val)
 
-            # Personalization
             body = body.replace("<field_First Name>", str(row['First Name']).strip())
             body = body.replace("<field_Prep Done>", fmt(row['Prep Done']))
             body = body.replace("<field_Closing Done>", fmt(row['Closing Done']))
             body = body.replace("<field_Prep Left>", fmt(row['Prep Left']))
             body = body.replace("<field_Closing Left>", fmt(row['Closing Left']))
             
-            # Hyperlink
             link_html = f'<a href="{gsheet_url}">{sem} Assistant Schedule</a>'
             body = body.replace("Assistant Schedule", link_html)
-            
-            # HTML Formatting (Preserve New Lines)
             body = body.replace("\n", "<br>")
             
             output_data.append({
+                "Status": "Pending", # <--- NEW COLUMN
                 "Send Date": row['Signup Date'],
                 "Send Time": row['Signup Time'],
                 "First Name": row['First Name'],
@@ -103,6 +96,5 @@ if csv_file:
         result_df = pd.DataFrame(output_data)
         st.success(f"Processed {len(result_df)} assistants.")
         st.download_button("Download Processed CSV", result_df.to_csv(index=False), "ready_to_mail_merge.csv")
-
     except Exception as e:
-        st.error(f"Error processing CSV: {e}")
+        st.error(f"Error: {e}")
