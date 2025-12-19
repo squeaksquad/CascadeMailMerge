@@ -39,7 +39,7 @@ gsheet_url = st.sidebar.text_input("Assistant Schedule Link", "https://docs.goog
 send_from = st.sidebar.text_input("Send From (Alias)", "bdimaio@berklee.edu")
 bcc_email = st.sidebar.text_input("BCC Address", "studiomanagers@berklee.edu")
 
-csv_file = st.file_uploader("Upload 'Assistant Shift Requirements Document'", type=["csv"])
+csv_file = st.file_uploader("Upload Assistant Shift Requirements Document", type=["csv"])
 
 def get_semester_code(date_obj):
     month, year = date_obj.month, date_obj.year
